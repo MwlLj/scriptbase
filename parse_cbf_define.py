@@ -21,6 +21,7 @@ class CDefineParse(CFileReader):
 	PARAM_TYPE_HEADER = "header"
 	PARAM_TYPE_BODY = "body"
 	PARAM_TYPE_PATH = "PATH"
+	PARAM_TYPE_CONTEXT = "context"
 	__KEYWORD_BREF = "@bref"
 	__KEYWORD_CLASSNAME = "@classname"
 	__KEYWORD_METHOD = "@method"
@@ -31,6 +32,7 @@ class CDefineParse(CFileReader):
 	__H = "h"
 	__B = "b"
 	__U = "u"
+	__C = "c"
 
 	def __init__(self, file_path):
 		CFileReader.__init__(self, file_path, CFileReader.MODE_READ_CONTENT)
@@ -131,6 +133,8 @@ class CDefineParse(CFileReader):
 			_type = CDefineParse.PARAM_TYPE_URLPARAM
 		elif _type == CDefineParse.__U:
 			_type = CDefineParse.PARAM_TYPE_PATH
+		elif _type == CDefineParse.__C:
+			_type = CDefineParse.PARAM_TYPE_CONTEXT
 		tmp[CDefineParse.IO_PARAM_TYPE] = _type
 		return tmp
 

@@ -100,6 +100,9 @@ class CFileReader(CFileHandle):
     def get_file_path(self):
         return self.m_filepath
 
+    def del_annotation(self, content):
+        return self.__del_mulline_annotation(content, "")
+
     def __del_mulline_annotation(self, content, encoding):
         content = re.sub(r"#.*", "", content)
         content = re.sub(r"//.*", "", content)

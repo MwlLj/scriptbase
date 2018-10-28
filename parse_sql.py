@@ -22,7 +22,9 @@ class CSqlParse(CFileReader):
 	OUTPUT_PARAMS = "output_params"
 	PARAM_TYPE = "param_type"
 	PARAM_NAME = "param_name"
+	PARAM_IS_CONDITION = "param_is_condition"
 	SQL = "sql"
+	__CONDITION = "[cond]"
 	__KEYWORD_BREF = "@bref"
 	__KEYWORD_BUFLEN = "@buf_len"
 	__KEYWORD_IN_ISARR = "@in_isarr"
@@ -47,7 +49,7 @@ class CSqlParse(CFileReader):
 		create_tables_sql = ""
 		create_tables = re.findall(r"(?:^|[\s]*?)#create[ ]+?tables[\s]*?\/\*(.*?)\*\/[\s]*?#end", content, re.S)
 		for create_table in create_tables:
-			create_tables_sql += create_table
+			create_tables_sql += self.del_annotation(create_table)
 		create_tables_sql = self.__filter_sql(create_tables_sql)
 		# 获取import路径列表
 		import_list = re.findall(r"(?:^|[\s]*?)#[ ]*?import[ ]+?(.*)?", content)
@@ -182,13 +184,19 @@ class CSqlParse(CFileReader):
 
 	def __parse_param_str(self, param_str):
 		search = re.search(r"(.*?):(.*)?", param_str)
-		gropus = search.groups()
-		search_len = len(gropus)
+		groups = search.groups()
+		search_len = len(groups)
 		if search_len != 2:
 			raise SystemExit("[Param Error] {0} (not exist ':' between param_name and param_type)".format(param_str))
+		param_name = groups[0]
+		is_cond = False
+		if CSqlParse.__CONDITION in param_name:
+			param_name = re.sub(r"\[.*?\]", "", param_name)
+			is_cond = True
 		tmp = {}
-		tmp[CSqlParse.PARAM_NAME] = self.__del_white_char(gropus[0])
-		tmp[CSqlParse.PARAM_TYPE] = self.__del_white_char(gropus[1])
+		tmp[CSqlParse.PARAM_NAME] = self.__del_white_char(param_name)
+		tmp[CSqlParse.PARAM_TYPE] = self.__del_white_char(groups[1])
+		tmp[CSqlParse.PARAM_IS_CONDITION] = is_cond
 		return tmp
 
 	def __filter_sql(self, sql_str):
