@@ -6,6 +6,7 @@ from file_handle_re import CFileReader
 class CSqlParse(CFileReader):
 	NAMESPACE = "namespace"
 	CREATE_TABELS_SQL = "create_tables_sql"
+	CREATE_FUNCTION_SQLS = "create_function_sqls"
 	IMPORT_LIST = "import_list"
 	METHOD_LIST = "method_list"
 	FUNC_NAME = "func_name"
@@ -51,6 +52,7 @@ class CSqlParse(CFileReader):
 		for create_table in create_tables:
 			create_tables_sql += self.del_annotation(create_table)
 		create_tables_sql = self.__filter_sql(create_tables_sql)
+		create_functions = re.findall(r"(?:^|[\s]*?)#create[ ]+?function[\s]*?\/\*(.*?)\*\/[\s]*?#end", content, re.S)
 		# 获取import路径列表
 		import_list = re.findall(r"(?:^|[\s]*?)#[ ]*?import[ ]+?(.*)?", content)
 		# 获取 注释体 和 语句体
@@ -102,6 +104,7 @@ class CSqlParse(CFileReader):
 			method_list.append(method_info)
 		self.m_info_dict[CSqlParse.NAMESPACE] = namespace
 		self.m_info_dict[CSqlParse.CREATE_TABELS_SQL] = create_tables_sql
+		self.m_info_dict[CSqlParse.CREATE_FUNCTION_SQLS] = create_functions
 		self.m_info_dict[CSqlParse.IMPORT_LIST] = import_list
 		self.m_info_dict[CSqlParse.METHOD_LIST] = method_list
 
