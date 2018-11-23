@@ -50,6 +50,29 @@ class CParseExcel(object):
 			sheet_infos.append(sheet_info)
 		self.m_info_dict[CParseExcel.SHEET_INFOS] = sheet_infos
 
+	def delete_row_data(self, obj, sname):
+		wb = xlrd.open_workbook(self.m_file_path)
+		sheet = wb.sheet_by_name(sname)
+		col_val = sheet.col_values(0)
+		del_nrows = 0
+		for j in range(len(col_val)):
+			if col_val[j]==int(obj):
+				del_nrows=j
+		if del_nrows==0:
+			msg = False
+			return msg
+		else:
+			red_all=self.read_all_data(sname)
+			a=red_all.pop(del_nrows)
+			wbt = xlwt.Workbook()
+			sheet = wbt.add_sheet(sname)
+			for m in range(len(red_all)):
+				for n in range(len(red_all[m])):
+					sheet.write(m, n, red_all[m][n])
+			wbt.save(self.path)
+			msg = True
+			return msg
+
 	def get_info_dict(self):
 		return self.m_info_dict
 
