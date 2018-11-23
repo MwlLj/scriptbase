@@ -72,7 +72,7 @@ class CParseExcel(object):
 			wbt.save(self.path)
 			msg = True
 			return msg
-
+			
 	def get_info_dict(self):
 		return self.m_info_dict
 
