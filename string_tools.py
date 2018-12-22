@@ -334,6 +334,40 @@ class CStringTools(object):
 		return fulls, num_max
 
 	@classmethod
+	def get_brace_format_list2(cls, content):
+		num_max = 0
+		fulls = []
+		number_tmp = []
+		full_tmp = ""
+		is_in_symbol = False
+		last_is_other = False
+		next_is_other = False
+		for item in content:
+			if item == "{":
+				full_tmp = '\\{'
+				is_in_symbol = True
+				last_is_other = True
+			elif item == "}":
+				next_is_other = True
+				full_tmp += "\\}"
+				number = int("".join(number_tmp))
+				if num_max < number:
+					num_max = number
+				fulls.append((number, full_tmp, last_is_other, next_is_other))
+				full_tmp = ""
+				is_in_symbol = False
+				number_tmp.clear()
+			else:
+				full_tmp += item
+				if last_is_other is True and is_in_symbol is False:
+					last_is_other = False
+				if next_is_other is True and is_in_symbol is False:
+					next_is_other = False
+				if is_in_symbol is True:
+					number_tmp.append(item)
+		return fulls, num_max
+
+	@classmethod
 	def num2binstring(cls, value):
 		return bin(value).replace("0b", "")
 

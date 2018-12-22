@@ -11,6 +11,8 @@ class CSqlParse(CFileReader):
 	METHOD_LIST = "method_list"
 	FUNC_NAME = "func_name"
 	BREF = "bref"
+	IN_CLASS = "in_class"
+	OUT_CLASS = "out_class"
 	BUFLEN = "buf_len"
 	IN_ISARR = "in_isarr"
 	OUT_ISARR = "out_isarr"
@@ -29,6 +31,8 @@ class CSqlParse(CFileReader):
 	__CONDITION = "[cond]"
 	__KEYWORD_BREF = "@bref"
 	__KEYWORD_BUFLEN = "@buf_len"
+	__KEYWORD_IN_CLASS = "@in_class"
+	__KEYWORD_OUT_CLASS = "@out_class"
 	__KEYWORD_IN_ISARR = "@in_isarr"
 	__KEYWORD_OUT_ISARR = "@out_isarr"
 	__KEYWORD_GROUPIN = "@gin"
@@ -66,7 +70,7 @@ class CSqlParse(CFileReader):
 			anno_block, func_name, sql_str = result
 			if func_name == "":
 				continue
-			bref, buf_len, is_brace, has_res, is_group, in_isarr, out_isarr, group_input_params, input_params, output_params = self.__parse_anno_block(anno_block)
+			bref, buf_len, is_brace, has_res, is_group, in_class, out_class, in_isarr, out_isarr, group_input_params, input_params, output_params = self.__parse_anno_block(anno_block)
 			sql_info = self.__parse_sql(sql_str)
 			sql_str = self.__filter_sql(sql_str)
 			method_info = {}
@@ -101,6 +105,10 @@ class CSqlParse(CFileReader):
 				else:
 					is_group = None
 				method_info[CSqlParse.IS_GROUP] = is_group
+			if in_class is not None:
+				method_info[CSqlParse.IN_CLASS] = in_class
+			if out_class is not None:
+				method_info[CSqlParse.OUT_CLASS] = out_class
 			if in_isarr is not None:
 				method_info[CSqlParse.IN_ISARR] = in_isarr
 			if out_isarr is not None:
@@ -121,6 +129,8 @@ class CSqlParse(CFileReader):
 	def __parse_anno_block(self, anno_block):
 		bref = None
 		buf_len = None
+		in_class = None
+		out_class = None
 		in_isarr = None
 		out_isarr = None
 		is_brace = None
@@ -148,6 +158,12 @@ class CSqlParse(CFileReader):
 			is_keyword = self.__is_keyword(CSqlParse.__KEYWORD_ISGROUP, line)
 			if is_keyword is not None:
 				is_group = self.__del_white_char(is_keyword)
+			is_keyword = self.__is_keyword(CSqlParse.__KEYWORD_IN_CLASS, line)
+			if is_keyword is not None:
+				in_class = self.__del_white_char(is_keyword)
+			is_keyword = self.__is_keyword(CSqlParse.__KEYWORD_OUT_CLASS, line)
+			if is_keyword is not None:
+				out_class = self.__del_white_char(is_keyword)
 			is_keyword = self.__is_keyword(CSqlParse.__KEYWORD_IN_ISARR, line)
 			if is_keyword is not None:
 				in_isarr = self.__del_white_char(is_keyword)
@@ -176,7 +192,7 @@ class CSqlParse(CFileReader):
 			output_params = None
 		if len(group_input_params) == 0:
 			group_input_params = None
-		return bref, buf_len, is_brace, has_res, is_group, in_isarr, out_isarr, group_input_params, input_params, output_params
+		return bref, buf_len, is_brace, has_res, is_group, in_class, out_class, in_isarr, out_isarr, group_input_params, input_params, output_params
 
 	def __parse_sql(self, sql_str):
 		sql_info = {}
