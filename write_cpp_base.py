@@ -106,10 +106,10 @@ class CWriteCppBase(object):
 	def write_default_init_param_list(self, param_list):
 		return self.__write_init_param_list(param_list, True)
 
-	def write_member_init_param_list(self, param_type, param_name, is_default):
+	def write_member_init_param_list(self, param_list):
 		return self.__write_init_param_list(param_list, False)
 
-	def __write_init_param(self, param_list):
+	def __write_init_param(self, param_type, param_name, is_default):
 		content = ""
 		if param_type is None or param_name is None:
 			return content
