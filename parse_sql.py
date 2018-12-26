@@ -6,6 +6,7 @@ from file_handle_re import CFileReader
 class CSqlParse(CFileReader):
 	NAMESPACE = "namespace"
 	CREATE_TABELS_SQL = "create_tables_sql"
+	CREATE_TABLE_LIST = "create_table_list"
 	CREATE_FUNCTION_SQLS = "create_function_sqls"
 	IMPORT_LIST = "import_list"
 	METHOD_LIST = "method_list"
@@ -53,10 +54,13 @@ class CSqlParse(CFileReader):
 			raise RuntimeError("namespace is none")
 		namespace = namespace[-1]
 		# 获取创建表的 sql
+		create_table_list = []
 		create_tables_sql = ""
 		create_tables = re.findall(r"(?:^|[\s]*?)#create[ ]+?tables[\s]*?\/\*(.*?)\*\/[\s]*?#end", content, re.S)
 		for create_table in create_tables:
-			create_tables_sql += self.del_annotation(create_table)
+			after_handle_sql = self.del_annotation(create_table)
+			create_tables_sql += after_handle_sql
+			create_table_list.append(self.__filter_sql(after_handle_sql))
 		create_tables_sql = self.__filter_sql(create_tables_sql)
 		create_functions = re.findall(r"(?:^|[\s]*?)#create[ ]+?function[\s]*?\/\*(.*?)\*\/[\s]*?#end", content, re.S)
 		# 获取import路径列表
@@ -122,6 +126,7 @@ class CSqlParse(CFileReader):
 			method_list.append(method_info)
 		self.m_info_dict[CSqlParse.NAMESPACE] = namespace
 		self.m_info_dict[CSqlParse.CREATE_TABELS_SQL] = create_tables_sql
+		self.m_info_dict[CSqlParse.CREATE_TABLE_LIST] = create_table_list
 		self.m_info_dict[CSqlParse.CREATE_FUNCTION_SQLS] = create_functions
 		self.m_info_dict[CSqlParse.IMPORT_LIST] = import_list
 		self.m_info_dict[CSqlParse.METHOD_LIST] = method_list
