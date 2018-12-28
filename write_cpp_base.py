@@ -66,20 +66,20 @@ class CWriteCppBase(object):
 
 	def write_member_var(self, param_type, param_name):
 		content = ""
-		param_type = self.type_change(param_type)
+		param_type, is_custom_type = self.type_change(param_type)
 		content += "{0} {1};".format(param_type, param_name)
 		return content
 
 	def write_get_method(self, param_type, param_name):
 		content = ""
-		param_type = self.type_change(param_type)
+		param_type, is_custom_type = self.type_change(param_type)
 		content += "const {0} &get{1}() const".format(param_type, CStringTools.upperFirstByte(param_name))
 		content += " { return this->" + param_name + "; }"
 		return content
 
 	def write_set_method(self, param_type, param_name):
 		content = ""
-		param_type = self.type_change(param_type)
+		param_type, is_custom_type = self.type_change(param_type)
 		content += "void set{0}(const {1} &{2})".format(CStringTools.upperFirstByte(param_name), param_type, param_name)
 		content += " { this->" + "{0} = {0}".format(param_name) + "; }"
 		return content
@@ -88,7 +88,7 @@ class CWriteCppBase(object):
 		content = ""
 		if param_type is None or param_name is None:
 			return content
-		param_type = self.type_change(param_type)
+		param_type, is_custom_type = self.type_change(param_type)
 		content += "const {0} &{1}".format(param_type, param_name)
 		return content
 
@@ -113,14 +113,18 @@ class CWriteCppBase(object):
 		content = ""
 		if param_type is None or param_name is None:
 			return content
-		param_type = self.type_change(param_type)
+		param_type, is_custom_type = self.type_change(param_type)
 		value = param_name
-		if param_type == "std::string":
-			if is_default is True:
-				value = '""'
+		if is_custom_type is False:
+			if param_type == "std::string":
+				if is_default is True:
+					value = '""'
+			else:
+				if is_default is True:
+					value = "0"
 		else:
 			if is_default is True:
-				value = "0"
+				value = ""
 		content += "{0}({1})".format(param_name, value)
 		return content
 
@@ -186,7 +190,8 @@ class CWriteCppBase(object):
 		return content
 
 	def type_change(self, param_type):
-		return param_type
+		# return param_type, is_custom_type
+		return param_type, False
 
 
 class __CTest(CWriteCppBase):
