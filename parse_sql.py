@@ -29,6 +29,9 @@ class CSqlParse(CFileReader):
 	PARAM_TYPE = "param_type"
 	PARAM_NAME = "param_name"
 	PARAM_IS_CONDITION = "param_is_condition"
+	SUB_FUNC_LIST = "sub_func_list"
+	SUB_FUNC_NAME = "sub_func_name"
+	SUB_FUNC_INDEX = "sub_func_index"
 	SQL = "sql"
 	__CONDITION = "[cond]"
 	__KEYWORD_BREF = "@bref"
@@ -44,6 +47,7 @@ class CSqlParse(CFileReader):
 	__KEYWORD_ISGROUP = "@is_group"
 	__KEYWORD_ISSTARTTRANS = "@is_start_trans"
 	__KEYWORD_HAS_RES = "@has_res"
+	__KEYWORD_SUB = "@sub"
 
 	def __init__(self, file_path):
 		CFileReader.__init__(self, file_path, CFileReader.MODE_READ_CONTENT)
@@ -76,7 +80,7 @@ class CSqlParse(CFileReader):
 			anno_block, func_name, sql_str = result
 			if func_name == "":
 				continue
-			bref, buf_len, is_brace, has_res, is_group, is_start_trans, in_class, out_class, in_isarr, out_isarr, group_input_params, input_params, output_params = self.__parse_anno_block(anno_block)
+			bref, buf_len, is_brace, has_res, is_group, is_start_trans, in_class, out_class, in_isarr, out_isarr, group_input_params, input_params, output_params, sub_func_list = self.__parse_anno_block(anno_block)
 			sql_info = self.__parse_sql(sql_str)
 			sql_str = self.__filter_sql(sql_str)
 			method_info = {}
@@ -133,6 +137,8 @@ class CSqlParse(CFileReader):
 				method_info[CSqlParse.INPUT_PARAMS] = input_params
 			if output_params is not None:
 				method_info[CSqlParse.OUTPUT_PARAMS] = output_params
+			if sub_func_list is not None:
+				method_info[CSqlParse.SUB_FUNC_LIST] = sub_func_list
 			method_list.append(method_info)
 		self.m_info_dict[CSqlParse.NAMESPACE] = namespace
 		self.m_info_dict[CSqlParse.CREATE_TABELS_SQL] = create_tables_sql
@@ -155,6 +161,7 @@ class CSqlParse(CFileReader):
 		group_input_params = []
 		input_params = []
 		output_params = []
+		sub_func_list = []
 		lines = anno_block.splitlines()
 		for line in lines:
 			if line == "":
@@ -205,13 +212,31 @@ class CSqlParse(CFileReader):
 				tmp = self.__parse_param_str(is_keyword)
 				if tmp is not None:
 					output_params.append(tmp)
+			is_keyword = self.__is_keyword(CSqlParse.__KEYWORD_SUB, line)
+			if is_keyword is not None:
+				sub_func_name, sub_index = self.__parse_sub(is_keyword)
+				sub_func_list.append((sub_func_name, sub_index))
 		if len(input_params) == 0:
 			input_params = None
 		if len(output_params) == 0:
 			output_params = None
+		if len(sub_func_list) == 0:
+			sub_func_list = None
 		if len(group_input_params) == 0:
 			group_input_params = None
-		return bref, buf_len, is_brace, has_res, is_group, is_start_trans, in_class, out_class, in_isarr, out_isarr, group_input_params, input_params, output_params
+		return bref, buf_len, is_brace, has_res, is_group, is_start_trans, in_class, out_class, in_isarr, out_isarr, group_input_params, input_params, output_params, sub_func_list
+
+	def __parse_sub(self, sub_str):
+		search = re.search(r"(.*)?\[(.*)?\]", sub_str)
+		if search is None:
+			raise SystemExit("[Param Error] {0} format error".format(sub_str))
+		groups = search.groups()
+		groups_len = len(groups)
+		if groups_len != 2:
+			raise SystemExit("[Param Error] {0} format error".format(sub_str))
+		sub_func_name = groups[0]
+		sub_index = groups[1]
+		return sub_func_name, sub_index
 
 	def __parse_sql(self, sql_str):
 		sql_info = {}
@@ -288,7 +313,7 @@ class CSqlParse(CFileReader):
 
 
 if __name__ == "__main__":
-	parser = CSqlParse("../sqlitesql2cpp/example_sql/user_info.sql")
+	parser = CSqlParse("../sql2go/example_sql/user_info.sql")
 	parser.read()
 	info_dict = parser.get_info_dict()
 	print(info_dict)
