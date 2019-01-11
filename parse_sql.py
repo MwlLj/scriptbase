@@ -167,8 +167,8 @@ class CSqlParse(CFileReader):
 		for key in keys:
 			k = int(key)
 			if pre_index < 0 and k > 0:
-				sort_list.append(cur_func_name)
-			sort_list.append(sub_map[key])
+				sort_list.append((cur_func_name, "0"))
+			sort_list.append((sub_map[key], key))
 			pre_index = k
 		return sort_list
 
