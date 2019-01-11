@@ -30,6 +30,7 @@ class CSqlParse(CFileReader):
 	PARAM_NAME = "param_name"
 	PARAM_IS_CONDITION = "param_is_condition"
 	SUB_FUNC_LIST = "sub_func_list"
+	SUB_FUNC_SORT_LIST = "sub_func_sort_list"
 	SUB_FUNC_NAME = "sub_func_name"
 	SUB_FUNC_INDEX = "sub_func_index"
 	SQL = "sql"
@@ -52,6 +53,7 @@ class CSqlParse(CFileReader):
 	def __init__(self, file_path):
 		CFileReader.__init__(self, file_path, CFileReader.MODE_READ_CONTENT)
 		self.m_info_dict = {}
+		self.m_method_map = {}
 
 	def read_content(self, content, encoding):
 		# 获取 namespace
@@ -139,13 +141,36 @@ class CSqlParse(CFileReader):
 				method_info[CSqlParse.OUTPUT_PARAMS] = output_params
 			if sub_func_list is not None:
 				method_info[CSqlParse.SUB_FUNC_LIST] = sub_func_list
+				sort_list = self.sub_func_list_sort(sub_func_list, func_name)
+				method_info[CSqlParse.SUB_FUNC_SORT_LIST] = sort_list
 			method_list.append(method_info)
+			self.m_method_map[func_name] = method_info
 		self.m_info_dict[CSqlParse.NAMESPACE] = namespace
 		self.m_info_dict[CSqlParse.CREATE_TABELS_SQL] = create_tables_sql
 		self.m_info_dict[CSqlParse.CREATE_TABLE_LIST] = create_table_list
 		self.m_info_dict[CSqlParse.CREATE_FUNCTION_SQLS] = create_functions
 		self.m_info_dict[CSqlParse.IMPORT_LIST] = import_list
 		self.m_info_dict[CSqlParse.METHOD_LIST] = method_list
+
+	def get_methodinfo_by_methodname(self, method_name):
+		return self.m_method_map.get(method_name)
+
+	def sub_func_list_sort(self, sub_func_list, cur_func_name):
+		if sub_func_list is None or len(sub_func_list) < 1:
+			return
+		sub_map = {}
+		for sub_func_name, sub_func_index in sub_func_list:
+			sub_map[sub_func_index] = sub_func_name
+		keys = sorted(sub_map.keys())
+		sort_list = []
+		pre_index = int(keys[0])
+		for key in keys:
+			k = int(key)
+			if pre_index < 0 and k > 0:
+				sort_list.append(cur_func_name)
+			sort_list.append(sub_map[key])
+			pre_index = k
+		return sort_list
 
 	def __parse_anno_block(self, anno_block):
 		bref = None
