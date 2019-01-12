@@ -159,17 +159,13 @@ class CSqlParse(CFileReader):
 		if sub_func_list is None or len(sub_func_list) < 1:
 			return
 		sub_map = {}
+		sub_map["0"] = cur_func_name
 		for sub_func_name, sub_func_index in sub_func_list:
 			sub_map[sub_func_index] = sub_func_name
 		keys = sorted(sub_map.keys())
 		sort_list = []
-		pre_index = int(keys[0])
 		for key in keys:
-			k = int(key)
-			if pre_index < 0 and k > 0:
-				sort_list.append((cur_func_name, "0"))
 			sort_list.append((sub_map[key], key))
-			pre_index = k
 		return sort_list
 
 	def __parse_anno_block(self, anno_block):
