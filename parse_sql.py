@@ -28,13 +28,17 @@ class CSqlParse(CFileReader):
 	OUTPUT_PARAMS = "output_params"
 	PARAM_TYPE = "param_type"
 	PARAM_NAME = "param_name"
+	PARAM_CONDITION = "param_condition"
 	PARAM_IS_CONDITION = "param_is_condition"
+	PARAM_IS_PADDING = "param_is_padding"
+	PARAM_IS_EXIST_PADDING = "param_is_exist_padding"
 	SUB_FUNC_LIST = "sub_func_list"
 	SUB_FUNC_SORT_LIST = "sub_func_sort_list"
 	SUB_FUNC_NAME = "sub_func_name"
 	SUB_FUNC_INDEX = "sub_func_index"
 	SQL = "sql"
 	__CONDITION = "[cond]"
+	__PADDING = "[padding]"
 	__KEYWORD_BREF = "@bref"
 	__KEYWORD_BUFLEN = "@buf_len"
 	__KEYWORD_IN_CLASS = "@in_class"
@@ -82,7 +86,7 @@ class CSqlParse(CFileReader):
 			anno_block, func_name, sql_str = result
 			if func_name == "":
 				continue
-			bref, buf_len, is_brace, has_res, is_group, is_start_trans, in_class, out_class, in_isarr, out_isarr, group_input_params, input_params, output_params, sub_func_list = self.__parse_anno_block(anno_block)
+			bref, buf_len, is_brace, has_res, is_group, is_start_trans, in_class, out_class, in_isarr, out_isarr, group_input_params, input_params, output_params, sub_func_list, is_exist_padding = self.__parse_anno_block(anno_block)
 			sql_info = self.__parse_sql(sql_str)
 			sql_str = self.__filter_sql(sql_str)
 			method_info = {}
@@ -143,6 +147,8 @@ class CSqlParse(CFileReader):
 				method_info[CSqlParse.SUB_FUNC_LIST] = sub_func_list
 				sort_list = self.sub_func_list_sort(sub_func_list, func_name)
 				method_info[CSqlParse.SUB_FUNC_SORT_LIST] = sort_list
+			if is_exist_padding is not None:
+				method_info[CSqlParse.PARAM_IS_EXIST_PADDING] = is_exist_padding
 			method_list.append(method_info)
 			self.m_method_map[func_name] = method_info
 		self.m_info_dict[CSqlParse.NAMESPACE] = namespace
@@ -179,6 +185,7 @@ class CSqlParse(CFileReader):
 		has_res = None
 		is_group = None
 		is_start_trans = "true"
+		is_exist_padding = None
 		group_input_params = []
 		input_params = []
 		output_params = []
@@ -219,18 +226,20 @@ class CSqlParse(CFileReader):
 				out_isarr = self.__del_white_char(is_keyword)
 			is_keyword = self.__is_keyword(CSqlParse.__KEYWORD_GROUPIN, line)
 			if is_keyword is not None:
-				tmp = self.__parse_param_str(is_keyword)
+				tmp, _ = self.__parse_param_str(is_keyword)
 				if tmp is not None:
 					input_params.append(tmp)
 					group_input_params.append(tmp)
 			is_keyword = self.__is_keyword(CSqlParse.__KEYWORD_IN, line)
 			if is_keyword is not None:
-				tmp = self.__parse_param_str(is_keyword)
+				tmp, is_padding = self.__parse_param_str(is_keyword)
+				if is_padding[0] is True:
+					is_exist_padding = is_padding
 				if tmp is not None:
 					input_params.append(tmp)
 			is_keyword = self.__is_keyword(CSqlParse.__KEYWORD_OUT, line)
 			if is_keyword is not None:
-				tmp = self.__parse_param_str(is_keyword)
+				tmp, _ = self.__parse_param_str(is_keyword)
 				if tmp is not None:
 					output_params.append(tmp)
 			is_keyword = self.__is_keyword(CSqlParse.__KEYWORD_SUB, line)
@@ -245,7 +254,7 @@ class CSqlParse(CFileReader):
 			sub_func_list = None
 		if len(group_input_params) == 0:
 			group_input_params = None
-		return bref, buf_len, is_brace, has_res, is_group, is_start_trans, in_class, out_class, in_isarr, out_isarr, group_input_params, input_params, output_params, sub_func_list
+		return bref, buf_len, is_brace, has_res, is_group, is_start_trans, in_class, out_class, in_isarr, out_isarr, group_input_params, input_params, output_params, sub_func_list, is_exist_padding
 
 	def __parse_sub(self, sub_str):
 		search = re.search(r"(.*)?\[(.*)?\]", sub_str)
@@ -288,14 +297,26 @@ class CSqlParse(CFileReader):
 			raise SystemExit("[Param Error] {0} (not exist ':' between param_name and param_type)".format(param_str))
 		param_name = groups[0]
 		is_cond = False
+		is_padding = (False, None)
 		if CSqlParse.__CONDITION in param_name:
 			param_name = re.sub(r"\[.*?\]", "", param_name)
 			is_cond = True
+		if CSqlParse.__PADDING in param_name:
+			param_name = re.sub(r"\[.*?\]", "", param_name)
+			is_padding = (True, param_name)
+		param_condition = None
+		if is_cond is False and is_padding[0] is False:
+			r = re.findall(r"\[(.*)\]", param_name)
+			if len(r) == 1:
+				param_condition = r[0]
+				param_name = re.sub(r"\[.*\]", "", param_name)
 		tmp = {}
 		tmp[CSqlParse.PARAM_NAME] = self.__del_white_char(param_name)
 		tmp[CSqlParse.PARAM_TYPE] = self.__del_white_char(groups[1])
+		tmp[CSqlParse.PARAM_CONDITION] = param_condition
 		tmp[CSqlParse.PARAM_IS_CONDITION] = is_cond
-		return tmp
+		tmp[CSqlParse.PARAM_IS_PADDING] = is_padding[0]
+		return tmp, is_padding
 
 	def __filter_sql(self, sql_str):
 		sql = ""
