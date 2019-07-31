@@ -77,6 +77,13 @@ class CWriteCppBase(object):
 		content += " { return this->" + param_name + "; }"
 		return content
 
+	def write_get_mut_method(self, param_type, param_name):
+		content = ""
+		param_type, is_custom_type = self.type_change(param_type)
+		content += "{0} &getMut{1}()".format(param_type, CStringTools.upperFirstByte(param_name))
+		content += " { return this->" + param_name + "; }"
+		return content
+
 	def write_set_method(self, param_type, param_name):
 		content = ""
 		param_type, is_custom_type = self.type_change(param_type)
